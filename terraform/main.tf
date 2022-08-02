@@ -18,12 +18,12 @@ resource "yandex_vpc_subnet" "subnet-1" {
 
 resource "yandex_compute_instance" "node01" {
 
-  count = local.instance_count[terraform.workspace]
-  name  = "${terraform.workspace}-count-${count.index}"
+  #count = local.instance_count
+  name  = "node01"
 
   resources {
-    cores  = local.vm_cores[terraform.workspace]
-    memory = local.vm_memory[terraform.workspace]
+    cores  = 2
+    memory = 2
   }
 
   boot_disk {
@@ -41,20 +41,3 @@ resource "yandex_compute_instance" "node01" {
     ssh-keys = "${file("~/.ssh/id_rsa.pub")}"
   }
 }
-
-locals {
-  instance_count = {
-    "prod"=1
-    "stage"=1
-  }
-  vm_cores = {
-    "prod"=2
-    "stage"=1
-  }
-  vm_memory = {
-    "prod"=2
-    "stage"=1
-  }
-}
-
-
