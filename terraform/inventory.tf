@@ -6,11 +6,16 @@ resource "local_file" "inventory" {
     clickhouse:
       hosts:
         clickhouse-01:
-          ansible_host: ${yandex_compute_instance.node01.network_interface.0.nat_ip_address}
+          ansible_host: ${yandex_compute_instance.node[*].network_interface.0.nat_ip_address}
+    vector:
+      hosts:
+        vector-01:
+          ansible_host: ${yandex_compute_instance.node[*].network_interface.0.nat_ip_address}
   DOC
   filename = "../ansible/inventory/prod.yml"
 
   depends_on = [
-    yandex_compute_instance.node01
+    yandex_compute_instance.node[*],
+    yandex_compute_instance.node2
   ]
 }
