@@ -1,6 +1,6 @@
 resource "null_resource" "wait" {
   provisioner "local-exec" {
-    command = "sleep 10"
+    command = "sleep 50"
   }
 
   depends_on = [
