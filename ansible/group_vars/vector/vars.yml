@@ -1,2 +1,2 @@
 vector_version: 0.23.0
-vector_dirs: vector
+vector_config_dir: "/etc/vector"

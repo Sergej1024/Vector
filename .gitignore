@@ -34,5 +34,6 @@ override.tf.json
 terraform.rc
 .terraform.lock*
 key.json
+variable.tf
 # Local ansible/files directories
 ansible/files/*

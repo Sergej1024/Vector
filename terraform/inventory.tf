@@ -14,8 +14,8 @@ resource "local_file" "inventory" {
   DOC
   filename = "../ansible/inventory/prod.yml"
 
-  depends_on = [
-    yandex_compute_instance.node01,
-    yandex_compute_instance.node02
-  ]
+#  depends_on = [
+#    yandex_compute_instance.node01,
+#    yandex_compute_instance.node02
+#  ]
 }
