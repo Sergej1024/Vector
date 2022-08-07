@@ -56,7 +56,8 @@ resource "yandex_compute_instance" "node02" {
 
   boot_disk {
     initialize_params {
-      image_id = "fd8aqitd4vl5950ihohp"
+      #image_id = "fd8aqitd4vl5950ihohp" moy
+      image_id = "fd879gb88170to70d38a"
     }
   }
 
