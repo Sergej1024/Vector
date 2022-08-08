@@ -35,77 +35,71 @@
       register: create_db
       failed_when: create_db.rc != 0 and create_db.rc !=82
       changed_when: create_db.rc == 0
-#- name: Install Vector
-#  hosts: vector
-#  remote_user: centos
-#  handlers:
-# pre_tasks:
-#    - name: Vector download
-#      ansible.builtin.get_url:
-#        url: "https://packages.timber.io/vector/{{ vector_version }}/vector-{{ vector_version }}-x86_64-unknown-linux-gnu.tar.gz"
-#        dest: "files/vector-{{ vector_version }}-x86_64-unknown-linux-gnu.tar.gz"
-#      run_once: true
-#      delegate_to: localhost
-#  tasks:
-#    - name: Create dirs
-#      file:
-#        path: "./{{ vector_dirs }}/"
-#        state: directory
-#    - name : Copy Vector files
-#      copy:
-#        src: "files/vector-{{ vector_version }}-x86_64-unknown-linux-gnu.tar.gz"
-#        dest: ./
-#    - name: extractor presents
-#      ansible.builtin.yum:
-#        name:
-#          - unzip
-#          - tar
-#        state: present
-#      become: true
-#    - name: Vector Unarchive
-#      shell: "tar -C {{ vector_dirs }} -xzvf vector-{{ vector_version }}-x86_64-unknown-linux-gnu.tar.gz"
-#  post_tasks:
-#    - name: Template it
-#      template:
-#        src: vector.cfg.j2
-#        dest: "./{{ vector_dirs }}/vector.cfg"
+
 - name: Install Vector
   hosts: vector
- # remote_user: centos
-  handlers:
+  remote_user: centos
+
+  tasks:
+    - name: Download Vector distrib
+      ansible.builtin.get_url:
+        url: "https://packages.timber.io/vector/{{ vector_version }}/vector-{{ vector_version }}-1.{{ arch }}.rpm"
+        dest: "./vector-{{ vector_version }}-1.{{ arch }}.rpm"
+        mode: "0644"
+
+    - name: Install Vector packages
+      become: true
+      ansible.builtin.yum:
+        name:
+          - vector-{{ vector_version }}-1.{{ arch }}.rpm
+
+    - name: Copy Vector config
+      ansible.builtin.template:
+        src: vector.yml.j2
+        dest: vector.yml
+        mode: "0644"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_gid }}"
+        #validate: vector validate --no-environment --config-yaml %s
+       
     - name: Start Vector service
       become: true
       ansible.builtin.service:
         name: vector
         state: restarted
+        daemon_reload: true
+
+# Для примера установка из tar
+- name: Install Vector
+  hosts: vector
+  remote_user: centos
+  handlers:
+  pre_tasks:
+  - name: Vector download
+    ansible.builtin.get_url:
+      url: "https://packages.timber.io/vector/{{ vector_version }}/vector-{{ vector_version }}-x86_64-unknown-linux-gnu.tar.gz"
+      dest: "files/vector-{{ vector_version }}-x86_64-unknown-linux-gnu.tar.gz"
+    run_once: true
+    delegate_to: localhost
   tasks:
-    - name: Vector download packages
-      ansible.builtin.get_url:
-        url: "https://packages.timber.io/vector/{{ vector_version }}/vector-{{ vector_version }}-1.x86_64.rpm"
-        dest: "./vector-{{ vector_version }}-1.x86_64.rpm"
-    - name: Vector install packages
-      become: true
-      ansible.builtin.yum:
-        name: "./vector-{{ vector_version }}-1.x86_64.rpm"
-        state: present
-        #skip_broken: true
-        #disable_gpg_check: true
-    - name: Vector apply template
-      become: true
-      ansible.builtin.template:
-        src: vector.cfg.j2
-        dest: "{{ vector_config_dir }}/vector.cfg"
-        mode: "0644"
-        owner: "{{ ansible_user_id }}"
-        group: "{{ ansible_user_gid }}"
-        validate: vector validate --no-environment --config-yaml %s
-   # - name: Vector | change systemd unit
-   #   become: true
-   #   ansible.builtin.template:
-   #     src: vector.service.j2
-   #     dest: /usr/lib/systemd/system/vector.service
-   #     mode: "0644"
-   #     owner: "{{ ansible_user_id }}"
-   #     group: "{{ ansible_user_gid }}"
-   #     backup: true
-   #   notify: Start Vector service
+   - name: Create dirs
+     file:
+       path: "./{{ vector_dirs }}/"
+       state: directory
+   - name : Copy Vector files
+     copy:
+       src: "files/vector-{{ vector_version }}-x86_64-unknown-linux-gnu.tar.gz"
+       dest: ./
+   - name: Vector Unarchive
+     shell: "tar -C {{ vector_dirs }} -xzf vector-{{ vector_version }}-x86_64-unknown-linux-gnu.tar.gz --strip-components=2"
+     run_once: true
+   - name: Move Vector into your $PATH
+     shell: cd vector | echo "export PATH=\"$(pwd)/vector/bin:\$PATH\"" >> $HOME/.profile && source $HOME/.profile
+     run_once: true
+  # - name: Start Vector
+  #   shell: vector --config config/vector.toml
+  post_tasks:
+   - name: Template it
+     template:
+       src: vector.cfg.j2
+       dest: "./{{ vector_dirs }}/vector.cfg"
