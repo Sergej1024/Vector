@@ -60,8 +60,8 @@
         mode: "0644"
         owner: "{{ ansible_user_id }}"
         group: "{{ ansible_user_gid }}"
-        #validate: vector validate --no-environment --config-yaml %s
-       
+        # validate: vector validate --no-environment --config-yaml %s
+
     - name: Start Vector service
       become: true
       ansible.builtin.service:
@@ -75,31 +75,32 @@
   remote_user: centos
   handlers:
   pre_tasks:
-  - name: Vector download
-    ansible.builtin.get_url:
-      url: "https://packages.timber.io/vector/{{ vector_version }}/vector-{{ vector_version }}-x86_64-unknown-linux-gnu.tar.gz"
-      dest: "files/vector-{{ vector_version }}-x86_64-unknown-linux-gnu.tar.gz"
-    run_once: true
-    delegate_to: localhost
+    - name: Vector download
+      ansible.builtin.get_url:
+        url: "https://packages.timber.io/vector/{{ vector_version }}/vector-{{ vector_version }}-x86_64-unknown-linux-gnu.tar.gz"
+        dest: "files/vector-{{ vector_version }}-x86_64-unknown-linux-gnu.tar.gz"
+      run_once: true
+      delegate_to: localhost
   tasks:
-   - name: Create dirs
-     file:
-       path: "./{{ vector_dirs }}/"
-       state: directory
-   - name : Copy Vector files
-     copy:
-       src: "files/vector-{{ vector_version }}-x86_64-unknown-linux-gnu.tar.gz"
-       dest: ./
-   - name: Vector Unarchive
-     shell: "tar -C {{ vector_dirs }} -xzf vector-{{ vector_version }}-x86_64-unknown-linux-gnu.tar.gz --strip-components=2"
-     run_once: true
-   - name: Move Vector into your $PATH
-     shell: cd vector | echo "export PATH=\"$(pwd)/vector/bin:\$PATH\"" >> $HOME/.profile && source $HOME/.profile
-     run_once: true
+    - name: Create dirs
+      ansible.builtin.file:
+        path: "./{{ vector_dirs }}/"
+        state: directory
+    - name: Copy Vector files
+      ansible.builtin.copy:
+        src: "files/vector-{{ vector_version }}-x86_64-unknown-linux-gnu.tar.gz"
+        dest: ./
+        #changed_when: false
+    - name: Vector Unarchive
+      ansible.builtin.shell: "tar -C {{ vector_dirs }} -xzf vector-{{ vector_version }}-x86_64-unknown-linux-gnu.tar.gz --strip-components=2"
+      changed_when: false
+    - name: Move Vector into your $PATH
+      ansible.builtin.shell: cd vector | echo "export PATH=\"$(pwd)/vector/bin:\$PATH\"" >> $HOME/.profile && source $HOME/.profile
+      changed_when: false
   # - name: Start Vector
-  #   shell: vector --config config/vector.toml
+  #   ansible.builtin.shell: vector --config config/vector.toml
   post_tasks:
-   - name: Template it
-     template:
-       src: vector.cfg.j2
-       dest: "./{{ vector_dirs }}/vector.cfg"
+    - name: Template it
+      ansible.builtin.template:
+        src: vector.cfg.j2
+        dest: "./{{ vector_dirs }}/vector.cfg"
